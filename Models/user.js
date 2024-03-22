@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema(
     },
     forgotPasswordToken: String,
     forgotPasswordExpiry: Date,
+    emailVerificationToken:String,
+    emailVerificationTokenExpiry:Date
   },
   {
     timestamps: true,
@@ -45,7 +47,6 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function (next) {
    
   if (this.isModified("password")) {
-    console.log("password " )
     this.password = await bcrypt.hash(this.password, 10);
   }
   return next();
@@ -68,6 +69,20 @@ userSchema.methods.generateForgetPasswordToken = async function () {
   this.forgotPasswordExpiry = Date.now() + 20 * 60 * 1000;
   return forgetToken;
 };
+
+userSchema.methods.getEmailVerificationToken=async function()
+{
+    if(!this.isEmailVerified)
+    {
+        const verificationToken=crypto.randomBytes(20).toString("hex");
+        this.emailVerificationToken=crypto.createHash("sha256").update(verificationToken).digest("hex");
+        this.emailVerificationTokenExpiry=Date.now() + 20 * 60 * 1000;
+        await this.save({ validateBeforeSave: false })
+        return verificationToken
+
+    }   
+}
+
 userSchema.statics.IsEmailExists = async function (email) {
   if (await User.findOne({ email: email })) {
     return true;
