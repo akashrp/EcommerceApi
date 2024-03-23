@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { sendMail } from "../utils/mailHelper.js";
 const from_Mail = process.env.from_Mail;
 
+//add user
 export const addUser = asyncHandler(async (req, res) => {
   const { email, name, password, role } = req.body;
   if (!(email && name && password)) {
@@ -50,6 +51,8 @@ export const addUser = asyncHandler(async (req, res) => {
   });
 });
 
+
+//verify user
 export const VerifyUser=asyncHandler(async(req,res)=>{
     const{confirmation_token,user}=req.query
     if(!(confirmation_token && user))
@@ -83,4 +86,46 @@ export const VerifyUser=asyncHandler(async(req,res)=>{
     }
 
     return res.status(400).send("link is no longer valid")  
+})
+
+//login user
+export const login= asyncHandler(async(req,res)=>{
+    const {email,password}=req.body
+    if(!(email && password))
+    {
+        return res.status(400).send("insufficient data")
+    }
+    const user=await User.findOne({email:email},'password role email name isEmailVerified')
+    if(!user.isEmailVerified)
+    {
+        return res.status(403).send("please verify email")
+    }
+   
+    if(user && await user.comparePassword(password))
+    {
+        const token= user.getJwtToken()
+        const cookieOption={
+              expire:1*24*60*60*1000,
+            httpOnly:true
+        }
+        user.password=undefined
+       return res.status(200).cookie('token',token,cookieOption).json({
+            success:true,
+            token,
+            user
+        })
+    }
+    return res.status(400).send("invalid credentials")
+})
+
+//logout user
+
+export const logout = asyncHandler(async(req,res)=>{
+    return res.status(200).cookie("token",null,{
+        expire:Date.now(),
+        httpOnly:true
+    }).json({
+        success:true,
+        message:"user logged out"
+    })
 })
