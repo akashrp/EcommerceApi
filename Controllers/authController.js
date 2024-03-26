@@ -98,7 +98,7 @@ export const login= asyncHandler(async(req,res)=>{
         return res.status(400).send("insufficient data")
     }
     const user=await User.findOne({email:email},'password role email name isEmailVerified')
-    if(!user.isEmailVerified)
+    if(user && !user.isEmailVerified)
     {
         return res.status(403).send("please verify email")
     }
