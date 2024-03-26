@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import User from "../Models/user.js";
 import crypto from "crypto";
 import { sendMail } from "../utils/mailHelper.js";
+import userRoles from "../utils/userRole.js";
 const from_Mail = process.env.from_Mail;
 
 //add user
@@ -18,6 +19,7 @@ export const addUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
+    role:role?role:userRoles.USER
   });
   if (user) {
     const token = user.getJwtToken;
